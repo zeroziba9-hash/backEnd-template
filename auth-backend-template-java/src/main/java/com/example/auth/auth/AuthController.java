@@ -1,16 +1,17 @@
 package com.example.auth.auth;
 
 import com.example.auth.auth.dto.*;
+import com.example.auth.common.response.ApiResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
-import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,45 +20,44 @@ public class AuthController {
     private final AuthService authService;
 
     @GetMapping("/health")
-    public Map<String, Boolean> health() {
-        return Map.of("ok", true);
+    public ApiResponse<Boolean> health() {
+        return ApiResponse.ok(true);
     }
 
     @PostMapping("/auth/signup")
-    @ResponseStatus(HttpStatus.CREATED)
-    public Map<String, UserResponse> signup(@RequestBody @Valid SignupRequest req) {
-        return Map.of("user", authService.signup(req));
+    public ResponseEntity<ApiResponse<UserResponse>> signup(@RequestBody @Valid SignupRequest req) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(authService.signup(req)));
     }
 
     @PostMapping("/auth/login")
-    public AuthResponse login(@RequestBody @Valid LoginRequest req,
+    public ApiResponse<AuthResponse> login(@RequestBody @Valid LoginRequest req,
                               HttpServletRequest request,
                               HttpServletResponse response) {
         AuthResponse auth = authService.login(req, request);
         setRefreshCookie(response, auth.refreshToken());
-        return auth;
+        return ApiResponse.ok(auth);
     }
 
     @PostMapping("/auth/refresh")
-    public TokenResponse refresh(@RequestBody(required = false) RefreshRequest req,
+    public ApiResponse<TokenResponse> refresh(@RequestBody(required = false) RefreshRequest req,
                                  HttpServletRequest request) {
         String token = pickRefreshToken(req != null ? req.refreshToken() : null, request);
-        return authService.refresh(token);
+        return ApiResponse.ok(authService.refresh(token));
     }
 
     @PostMapping("/auth/logout")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void logout(@RequestBody(required = false) RefreshRequest req,
+    public ResponseEntity<ApiResponse<Void>> logout(@RequestBody(required = false) RefreshRequest req,
                        HttpServletRequest request,
                        HttpServletResponse response) {
         String token = pickRefreshToken(req != null ? req.refreshToken() : null, request);
         authService.logout(token);
         clearRefreshCookie(response);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(ApiResponse.ok());
     }
 
     @GetMapping("/auth/me")
-    public Map<String, UserResponse> me(@RequestHeader(name = "Authorization", required = false) String authorization) {
-        return Map.of("user", authService.me(authorization));
+    public ApiResponse<UserResponse> me(@RequestHeader(name = "Authorization", required = false) String authorization) {
+        return ApiResponse.ok(authService.me(authorization));
     }
 
     private String pickRefreshToken(String bodyToken, HttpServletRequest request) {

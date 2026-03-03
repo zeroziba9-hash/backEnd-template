@@ -5,14 +5,14 @@ import com.example.auth.session.Session;
 import com.example.auth.session.SessionRepository;
 import com.example.auth.user.User;
 import com.example.auth.user.UserRepository;
+import com.example.auth.common.error.ApiException;
+import com.example.auth.common.error.ErrorCode;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 
@@ -28,7 +28,7 @@ public class AuthService {
     @Transactional
     public UserResponse signup(SignupRequest req) {
         if (userRepository.existsByEmail(req.email())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already in use");
+            throw new ApiException(ErrorCode.DUPLICATE_RESOURCE, "Email already in use");
         }
 
         User user = User.builder()
@@ -44,10 +44,10 @@ public class AuthService {
     @Transactional
     public AuthResponse login(LoginRequest req, HttpServletRequest httpReq) {
         User user = userRepository.findByEmail(req.email())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
+                .orElseThrow(() -> new ApiException(ErrorCode.UNAUTHORIZED, "Invalid credentials"));
 
         if (!passwordEncoder.matches(req.password(), user.getPasswordHash())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+            throw new ApiException(ErrorCode.UNAUTHORIZED, "Invalid credentials");
         }
 
         String accessToken = jwtService.issueAccessToken(user.getId(), user.getEmail());
@@ -68,7 +68,7 @@ public class AuthService {
     @Transactional(readOnly = true)
     public TokenResponse refresh(String refreshToken) {
         if (refreshToken == null || refreshToken.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing refresh token");
+            throw new ApiException(ErrorCode.UNAUTHORIZED, "Missing refresh token");
         }
 
         jwtService.parseRefreshSubject(refreshToken); // validate signature/exp
@@ -81,7 +81,7 @@ public class AuthService {
             return new TokenResponse(accessToken);
         }
 
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token");
+        throw new ApiException(ErrorCode.UNAUTHORIZED, "Invalid refresh token");
     }
 
     @Transactional
@@ -99,7 +99,7 @@ public class AuthService {
     @Transactional(readOnly = true)
     public UserResponse me(String bearerToken) {
         if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
+            throw new ApiException(ErrorCode.UNAUTHORIZED, "Unauthorized");
         }
 
         String token = bearerToken.substring(7).trim();
@@ -107,7 +107,7 @@ public class AuthService {
         String userId = claims.getSubject();
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND_RESOURCE, "User not found"));
 
         return toUserResponse(user);
     }
