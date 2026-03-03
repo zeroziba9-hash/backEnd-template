@@ -1,0 +1,25 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/auth_template_java}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+app:
+  jwt:
+    access-secret: ${JWT_ACCESS_SECRET:change-this-access-secret-change-this-access-secret}
+    refresh-secret: ${JWT_REFRESH_SECRET:change-this-refresh-secret-change-this-refresh-secret}
+    access-exp-seconds: ${ACCESS_EXP_SECONDS:900}
+    refresh-exp-seconds: ${REFRESH_EXP_SECONDS:604800}
