@@ -5,16 +5,7 @@
 
 ## 포함된 템플릿
 
-### 1) `auth-backend-template` (Node.js)
-- **스택:** Express + TypeScript + Prisma + PostgreSQL + JWT
-- **기능:**
-  - 회원가입 `POST /auth/signup`
-  - 로그인 `POST /auth/login`
-  - 로그아웃 `POST /auth/logout`
-  - 토큰 재발급 `POST /auth/refresh`
-  - 내 정보 `GET /auth/me`
-
-### 2) `auth-backend-template-java` (Java)
+### `auth-backend-template-java` (Java)
 - **스택:** Spring Boot + Spring Security + JPA + PostgreSQL + JWT
 - **기능:**
   - 회원가입 `POST /auth/signup`
@@ -50,7 +41,7 @@ mvn spring-boot:run
 
 ## 추천 사용 순서
 
-1. `auth-backend-template-java` 또는 `auth-backend-template` 중 하나 선택
+1. `auth-backend-template-java` 진입
 2. `.env.example` 기반으로 환경변수 설정
 3. DB 생성 및 연결 확인
 4. 서버 실행
